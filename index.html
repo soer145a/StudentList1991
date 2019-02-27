@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Aktuelt Projekt</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <nav>
+      <button class="house-item" data-house="all">All Houses</button>
+      <button class="house-item" data-house="Gryffindor">Gryffindor</button>
+      <button class="house-item" data-house="Hufflepuff">Hufflepuff</button>
+      <button class="house-item" data-house="Slytherin">Slytherin</button>
+      <button class="house-item" data-house="Ravenclaw">Ravenclaw</button>
+    </nav>
+    <nav>
+      <button class="sort-item" id="btnFirst">
+        Sort by: First Name
+      </button>
+      <button class="sort-item" id="btnLast">Sort by: Last Name</button>
+      <button class="sort-item" id="btnHouse">Sort by: House</button>
+    </nav>
+    <div class="templateContainer"></div>
+    <template>
+      <article>
+        <p>Name: <span id="firstName"></span> <span id="lastName"></span></p>
+        <p>House: <span id="house"></span></p>
+      </article>
+    </template>
+    <div class="modalBox">
+      <div class="imgContainer">
+        <img src="" id="modalImg" />
+        <img src="" id="portrait" onerror="this.src='default.png'" />
+      </div>
+
+      <div class="textContainer">
+        <p>
+          Name: <span id="modal_firstName"></span>
+          <span id="modal_lastName"></span>
+        </p>
+        <p>House: <span id="modal_house"></span></p>
+      </div>
+    </div>
+  </body>
+</html>
+<style>
+  .templateContainer {
+    width: 30%;
+  }
+  html {
+    scrollbar-color: black;
+  }
+  .modalBox {
+    position: fixed;
+    width: 30vw;
+    height: 30vw;
+    background-color: white;
+    right: 10vw;
+    top: 5vw;
+  }
+  .imgContainer {
+    width: 10vw;
+    height: 10vw;
+  }
+  #modalImg {
+    width: 10vw;
+    height: 10vw;
+  }
+  #portrait {
+    margin-left: 10vw;
+    width: 10vw;
+    height: 10vw;
+  }
+  article {
+    border-style: solid;
+    border-color: black;
+    margin: 1vw;
+    background-color: black;
+    border-radius: 5vw;
+    text-align: center;
+    color: white;
+  }
+  article:hover {
+    transform: scale(1.05);
+    transition: 0.2s;
+  }
+  article:active {
+    transform: scale(0.95);
+  }
+  body {
+    background-color: darkgrey;
+  }
+  button {
+    border-style: solid;
+    border-color: black;
+    border-radius: 5vw;
+    background-color: black;
+    color: white;
+    font-size: 2em;
+  }
+
+  .gryffindor {
+    background-color: #ce3a0a;
+    color: #fdb02e;
+  }
+
+  .hufflepuf {
+    background-color: #ffc02a;
+    color: #0b0000;
+  }
+
+  .ravenclaw {
+    background-color: #395f9d;
+    color: #e9ba36;
+  }
+
+  .slytherin {
+    background-color: #588c39;
+    color: #c0b1c6;
+  }
+</style>
+<script>
+  "use strict";
+  let dest = document.querySelector(".templateContainer");
+  let template = document.querySelector("template");
+  let person;
+  let personlisteJson = [];
+
+  const studentProto = {
+    firstName: "-first name-",
+    lastName: "-last name-",
+    middleName: "-middle name-",
+    house: "-house of student-",
+    image: "-image of student-"
+  };
+
+  window.addEventListener("load", function(event) {
+    getJson();
+  });
+
+  async function getJson() {
+    let myJson = await fetch("http://petlatkea.dk/2019/hogwarts/students.json");
+    personlisteJson = await myJson.json();
+
+    document.querySelectorAll(".house-item").forEach(knap => {
+      knap.addEventListener("click", filterForHouse);
+    });
+
+    spliceTheArray(personlisteJson);
+  }
+
+  function spliceTheArray(inputArray) {
+    const splicedArray = [];
+
+    inputArray.forEach(student => {
+      const firstSpace = student.fullname.indexOf(" ");
+      const secondSpace = student.fullname.lastIndexOf(" ");
+
+      const firstName = student.fullname.slice(0, firstSpace);
+      // const middleName = fullname.slice(firstSpace, secondSpace);
+      const lastName = student.fullname.slice(secondSpace + 1);
+
+      let splicedStudent = Object.create(studentProto);
+      splicedStudent.firstName = firstName;
+      splicedStudent.lastName = lastName;
+      splicedStudent.house = student.house;
+      splicedStudent.image = lastName + "_" + firstName.charAt(0) + ".png";
+
+      splicedArray.push(splicedStudent);
+    });
+
+    visListe(splicedArray);
+  }
+
+  function sortFunc(array) {}
+
+  function filterForHouse() {
+    let houseFilter = this.getAttribute("data-house");
+    filterByType(houseFilter);
+  }
+
+  function filterByType(house) {
+    function filterType(element) {
+      return house === "all" || element.house === house;
+    }
+    const fakeJson = personlisteJson.filter(filterType);
+    spliceTheArray(fakeJson);
+  }
+
+  function visListe(studentArray) {
+    dest.textContent = "";
+    console.log(studentArray);
+
+    studentArray.forEach(person => {
+      {
+        let klon = template.cloneNode(true).content;
+
+        klon.querySelector("#firstName").textContent = person.firstName;
+        klon.querySelector("#lastName").textContent = person.lastName;
+        klon.querySelector("#house").textContent = person.house;
+        klon.querySelector("article").addEventListener("click", () => {
+          console.log(person);
+          visModal(person);
+        });
+
+        dest.appendChild(klon);
+      }
+    });
+
+    sortArrayList(studentArray);
+  }
+
+  function sortArrayList(forSort) {
+    console.log(forSort);
+    document.getElementById("btnFirst").addEventListener("click", function() {
+      sortForFirstName(forSort);
+    });
+    document.getElementById("btnLast").addEventListener("click", function() {
+      sortForLastName(forSort);
+    });
+    document.getElementById("btnHouse").addEventListener("click", function() {
+      sortForHouse(forSort);
+    });
+  }
+
+  function sortForFirstName(sortArray) {
+    sortArray.sort(compareFirstName);
+    console.log(sortArray);
+    visListe(sortArray);
+  }
+  function sortForLastName(sortArray) {
+    sortArray.sort(compareLastName);
+    console.log(sortArray);
+    visListe(sortArray);
+  }
+  function sortForHouse(sortArray) {
+    sortArray.sort(compareHouses);
+    console.log(sortArray);
+    visListe(sortArray);
+  }
+
+  function compareLastName(a, b) {
+    if (a.lastName < b.lastName) {
+      return -1;
+    } else {
+      return 1;
+    }
+  }
+  function compareFirstName(a, b) {
+    if (a.firstName < b.firstName) {
+      return -1;
+    } else {
+      return 1;
+    }
+  }
+  function compareHouses(a, b) {
+    if (a.house < b.house) {
+      return -1;
+    } else {
+      return 1;
+    }
+  }
+
+  function visModal(person) {
+    console.log(person);
+    let imageName = person.image.toLowerCase();
+    document.querySelector("#modal_firstName").textContent = person.firstName;
+    document.querySelector("#modal_lastName").textContent = person.lastName;
+    document.querySelector("#modal_house").textContent = person.house;
+    document.querySelector("#portrait").src = "images/" + imageName;
+
+    if (person.house == "Gryffindor") {
+      document.querySelector(".modalBox").classList.add("gryffindor");
+      document.querySelector(".modalBox").classList.remove("hufflepuf");
+      document.querySelector(".modalBox").classList.remove("slytherin");
+      document.querySelector(".modalBox").classList.remove("ravenclaw");
+      document.querySelector("#modalImg").src = "images/gryff.png";
+    }
+    if (person.house == "Hufflepuff") {
+      document.querySelector(".modalBox").classList.add("hufflepuf");
+      document.querySelector(".modalBox").classList.remove("gryffindor");
+      document.querySelector(".modalBox").classList.remove("slytherin");
+      document.querySelector(".modalBox").classList.remove("ravenclaw");
+      document.querySelector("#modalImg").src = "images/huffle.png";
+    }
+    if (person.house == "Slytherin") {
+      document.querySelector(".modalBox").classList.add("slytherin");
+      document.querySelector(".modalBox").classList.remove("hufflepuf");
+      document.querySelector(".modalBox").classList.remove("gryffindor");
+      document.querySelector(".modalBox").classList.remove("ravenclaw");
+      document.querySelector("#modalImg").src = "images/slyt.png";
+    }
+    if (person.house == "Ravenclaw") {
+      document.querySelector(".modalBox").classList.add("ravenclaw");
+      document.querySelector(".modalBox").classList.remove("hufflepuf");
+      document.querySelector(".modalBox").classList.remove("gryffindor");
+      document.querySelector(".modalBox").classList.remove("slytherin");
+      document.querySelector("#modalImg").src = "images/raven.png";
+    }
+  }
+</script>
